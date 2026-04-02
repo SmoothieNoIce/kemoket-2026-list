@@ -2,7 +2,7 @@ import * as React from "react"
 import { MoonIcon, SunIcon } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { BoothTable, BLOCKS, boothsByBlock } from "~/components/booth-table"
+import { BoothTable, BLOCKS, boothsByBlock, type Block } from "~/components/booth-table"
 
 function useDarkMode() {
   const [dark, setDark] = React.useState(false)
@@ -31,27 +31,58 @@ export default function Home() {
   const { dark, toggle } = useDarkMode()
   const navRef = React.useRef<HTMLElement>(null)
   const [navHeight, setNavHeight] = React.useState(0)
+  const [selectedBlock, setSelectedBlock] = React.useState<Block>("A")
 
   React.useEffect(() => {
-    if (navRef.current) setNavHeight(navRef.current.offsetHeight)
+    const el = navRef.current
+    if (!el) return
+    setNavHeight(el.offsetHeight)
+    const ro = new ResizeObserver(() => setNavHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   return (
-    <Tabs defaultValue="A" className="flex flex-col gap-0">
-      <nav ref={navRef} className="sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b bg-background px-4 py-2">
-        <span className="font-semibold text-sm whitespace-nowrap">関西けもケット11</span>
-        <TabsList className="flex w-fit justify-self-center gap-1">
-          {BLOCKS.map((block) => (
-            <TabsTrigger key={block} value={block} className="px-2 text-xs">
-              {block}({boothsByBlock[block].length})
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-          {dark ? <SunIcon /> : <MoonIcon />}
-        </Button>
+    <Tabs value={selectedBlock} onValueChange={(v) => setSelectedBlock(v as Block)} className="flex flex-col gap-0 w-screen">
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-30 border-b bg-background">
+        {/* 桌面：單列，tab 置中 */}
+        <div className="hidden md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:gap-2 md:px-4 md:py-2">
+          <span className="font-semibold text-sm whitespace-nowrap">関西けもケット11</span>
+          <div className="flex justify-center overflow-x-auto overflow-y-hidden">
+            <TabsList className="flex w-max gap-1">
+              {BLOCKS.map((block) => (
+                <TabsTrigger key={block} value={block} className="px-2 text-xs shrink-0">
+                  {block}({boothsByBlock[block].length})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+            {dark ? <SunIcon /> : <MoonIcon />}
+          </Button>
+        </div>
+        {/* 手機：兩列 */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="font-semibold text-sm">関西けもケット11</span>
+            <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+              {dark ? <SunIcon /> : <MoonIcon />}
+            </Button>
+          </div>
+          <div className="overflow-x-auto px-4 pb-2">
+            <TabsList className="flex w-max gap-1">
+              {BLOCKS.map((block) => (
+                <TabsTrigger key={block} value={block} className="px-2 text-xs shrink-0">
+                  {block}({boothsByBlock[block].length})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </div>
       </nav>
-      <BoothTable headerTop={navHeight} />
+      <div style={{ paddingTop: navHeight }}>
+        <BoothTable headerTop={navHeight} selectedBlock={selectedBlock} />
+      </div>
     </Tabs>
   )
 }

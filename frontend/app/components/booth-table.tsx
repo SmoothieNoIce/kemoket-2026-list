@@ -225,10 +225,9 @@ interface BlockTableProps {
   blockBooths: Booth[]
   records: Record<string, BoothRecord>
   onUpdate: (pos: string, patch: Partial<BoothRecord>) => void
-  headerTop: number
 }
 
-function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTableProps) {
+function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
   const totalQuantity = blockBooths.reduce(
     (sum, b) => sum + (parseInt(records[b.pos]?.quantity ?? "") || 0),
     0
@@ -241,22 +240,19 @@ function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTablePro
   return (
     // No overflow wrapper — any overflow-x:auto ancestor forces overflow-y:auto,
     // creating a scroll context that traps sticky. Let the body handle scrolling.
-    <table className="w-full caption-bottom text-sm">
-        <TableHeader
-          className="bg-background z-10 [&_tr]:border-b"
-          style={{ position: "sticky", top: headerTop }}
-        >
+    <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
+        <TableHeader className="[&_tr]:border-b">
           <TableRow>
-            <TableHead className="w-16">配置</TableHead>
-            <TableHead className="w-40">サークル名</TableHead>
-            <TableHead className="w-28">代表者名</TableHead>
-            <TableHead className="w-36">web</TableHead>
-            <TableHead className="w-36">pixiv</TableHead>
-            <TableHead className="w-36">twitter</TableHead>
-            <TableHead className="w-20 ">要買嗎</TableHead>
-            <TableHead className="w-20">數量</TableHead>
-            <TableHead className="w-24">金額</TableHead>
-            <TableHead className="min-w-40">備註</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-16">配置</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-40">サークル名</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-28">代表者名</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-36">web</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-36">pixiv</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-40">twitter</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-20">要買嗎</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-20">數量</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-24">金額</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background min-w-40">備註</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -285,7 +281,7 @@ function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTablePro
 
 // ── BoothTable ─────────────────────────────────────────────────────────────────
 
-export function BoothTable({ headerTop = 0 }: { headerTop?: number }) {
+export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?: number; selectedBlock?: Block }) {
   const [records, setRecords] = React.useState<Record<string, BoothRecord>>(
     () => loadRecords()
   )
@@ -303,18 +299,49 @@ export function BoothTable({ headerTop = 0 }: { headerTop?: number }) {
     })
   }, [])
 
+  const blockTotals = React.useMemo(() => {
+    const blockBooths = boothsByBlock[selectedBlock]
+    return {
+      quantity: blockBooths.reduce((sum, b) => sum + (parseInt(records[b.pos]?.quantity ?? "") || 0), 0),
+      amount: blockBooths.reduce((sum, b) => sum + (parseInt(records[b.pos]?.amount ?? "") || 0), 0),
+    }
+  }, [records, selectedBlock])
+
+  const grandTotals = React.useMemo(() => {
+    let quantity = 0
+    let amount = 0
+    for (const r of Object.values(records)) {
+      quantity += parseInt(r.quantity) || 0
+      amount += parseInt(r.amount) || 0
+    }
+    return { quantity, amount }
+  }, [records])
+
   return (
     <>
       {BLOCKS.map((block) => (
-        <TabsContent key={block} value={block} className="mt-0">
+        <TabsContent
+          key={block}
+          value={block}
+          className="mt-0 overflow-auto"
+          style={{ height: `calc(100vh - ${headerTop}px - 40px)` }}
+        >
           <BlockTable
             blockBooths={boothsByBlock[block]}
             records={records}
             onUpdate={onUpdate}
-            headerTop={headerTop}
           />
         </TabsContent>
       ))}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-end gap-4 border-t bg-background px-6 py-2 text-sm">
+        <span className="text-muted-foreground">{selectedBlock} ブロック</span>
+        <span>{blockTotals.quantity} 個</span>
+        <span>¥{blockTotals.amount.toLocaleString()}</span>
+        <span className="text-border">|</span>
+        <span className="text-muted-foreground">全体</span>
+        <span>{grandTotals.quantity} 個</span>
+        <span className="font-semibold">¥{grandTotals.amount.toLocaleString()}</span>
+      </div>
     </>
   )
 }
