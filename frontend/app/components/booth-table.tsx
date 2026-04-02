@@ -207,10 +207,10 @@ const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: Booth
         <Checkbox checked={record.wantToBuy} onCheckedChange={onCheckChange} />
       </TableCell>
       <TableCell>
-        <Input type="number" min={0} className="h-7 w-16 text-xs" value={record.quantity} onChange={onQuantityChange} />
+        <Input min={0} className="h-7 w-16 text-xs" value={record.quantity} onChange={onQuantityChange} />
       </TableCell>
       <TableCell>
-        <Input type="number" min={0} className="h-7 w-20 text-xs" value={record.amount} onChange={onAmountChange} />
+        <Input min={0} className="h-7 w-20 text-xs" value={record.amount} onChange={onAmountChange} />
       </TableCell>
       <TableCell>
         <Input className="min-h-7 h-7 text-xs resize-none" value={record.notes} onChange={onNotesChange} />
@@ -253,9 +253,9 @@ function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTablePro
             <TableHead className="w-36">web</TableHead>
             <TableHead className="w-36">pixiv</TableHead>
             <TableHead className="w-36">twitter</TableHead>
-            <TableHead className="w-20 text-center">買いたい</TableHead>
+            <TableHead className="w-20 text-center">要買嗎</TableHead>
             <TableHead className="w-20">數量</TableHead>
-            <TableHead className="w-24">金額 (¥)</TableHead>
+            <TableHead className="w-24">金額</TableHead>
             <TableHead className="min-w-40">備註</TableHead>
           </TableRow>
         </TableHeader>
@@ -275,7 +275,7 @@ function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTablePro
               合計
             </TableCell>
             <TableCell className="font-medium">{totalQuantity}</TableCell>
-            <TableCell className="font-medium">¥{totalAmount.toLocaleString()}</TableCell>
+            <TableCell className="font-medium">{totalAmount.toLocaleString()}</TableCell>
             <TableCell />
           </TableRow>
         </TableFooter>
