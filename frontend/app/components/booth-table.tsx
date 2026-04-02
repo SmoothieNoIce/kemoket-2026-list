@@ -99,7 +99,7 @@ const TwitterAvatar = React.memo(function TwitterAvatar({ twitterUrl }: { twitte
   }
   return (
     <img
-      src={`/avatars/${username}.jpg`}
+      src={`${import.meta.env.BASE_URL}avatars/${username}.jpg`}
       alt={username}
       loading="lazy"
       className="size-8 rounded-full object-cover bg-muted flex-shrink-0"
