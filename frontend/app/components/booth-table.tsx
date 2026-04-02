@@ -253,7 +253,7 @@ function BlockTable({ blockBooths, records, onUpdate, headerTop }: BlockTablePro
             <TableHead className="w-36">web</TableHead>
             <TableHead className="w-36">pixiv</TableHead>
             <TableHead className="w-36">twitter</TableHead>
-            <TableHead className="w-20 text-center">要買嗎</TableHead>
+            <TableHead className="w-20 ">要買嗎</TableHead>
             <TableHead className="w-20">數量</TableHead>
             <TableHead className="w-24">金額</TableHead>
             <TableHead className="min-w-40">備註</TableHead>
