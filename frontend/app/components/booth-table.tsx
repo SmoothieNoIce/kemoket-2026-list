@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { CheckIcon, ListIcon, StarIcon, XIcon } from "lucide-react"
+import { toast } from "sonner"
 import {
   TableBody,
   TableCell,
@@ -174,16 +175,27 @@ interface BoothRowProps {
 const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: BoothRowProps) {
   const { pos } = booth
 
-  const onStarClick = React.useCallback(
-    () => onUpdate(pos, { favorite: !record.favorite }),
-    [onUpdate, pos, record.favorite]
-  )
+  const onStarClick = React.useCallback(() => {
+    const next = !record.favorite
+    onUpdate(pos, { favorite: next })
+    toast(next ? "已加入最愛" : "已移除最愛", {
+      description: booth.name,
+      action: { label: "復原", onClick: () => onUpdate(pos, { favorite: !next }) },
+    })
+  }, [onUpdate, pos, record.favorite, booth.name])
   const visitWeb = React.useCallback(() => onUpdate(pos, { visitedWeb: true }), [onUpdate, pos])
   const visitPixiv = React.useCallback(() => onUpdate(pos, { visitedPixiv: true }), [onUpdate, pos])
   const visitTwitter = React.useCallback(() => onUpdate(pos, { visitedTwitter: true }), [onUpdate, pos])
   const onCheckChange = React.useCallback(
-    (v: boolean | "indeterminate") => onUpdate(pos, { wantToBuy: Boolean(v) }),
-    [onUpdate, pos]
+    (v: boolean | "indeterminate") => {
+      const next = Boolean(v)
+      onUpdate(pos, { wantToBuy: next })
+      toast(next ? "已加入購買項目" : "已移除購買項目", {
+        description: booth.name,
+        action: { label: "復原", onClick: () => onUpdate(pos, { wantToBuy: !next }) },
+      })
+    },
+    [onUpdate, pos, booth.name]
   )
   const onQuantityChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => onUpdate(pos, { quantity: e.target.value }),
@@ -242,14 +254,22 @@ interface BlockTableProps {
   blockBooths: Booth[]
   records: Record<string, BoothRecord>
   onUpdate: (pos: string, patch: Partial<BoothRecord>) => void
+  search?: string
 }
 
-function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
-  const totalQuantity = blockBooths.reduce(
+function BlockTable({ blockBooths, records, onUpdate, search }: BlockTableProps) {
+  const filtered = search
+    ? blockBooths.filter((b) => {
+        const q = search.toLowerCase()
+        return [b.pos, b.name, b.rep, b.twitter, b.web, b.pixiv].some((s) => s.toLowerCase().includes(q))
+      })
+    : blockBooths
+
+  const totalQuantity = filtered.reduce(
     (sum, b) => sum + (parseInt(records[b.pos]?.quantity ?? "") || 0),
     0
   )
-  const totalAmount = blockBooths.reduce(
+  const totalAmount = filtered.reduce(
     (sum, b) => sum + (parseInt(records[b.pos]?.amount ?? "") || 0),
     0
   )
@@ -274,7 +294,7 @@ function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {blockBooths.map((booth) => (
+        {filtered.map((booth) => (
           <BoothRow
             key={booth.pos}
             booth={booth}
@@ -299,7 +319,7 @@ function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
 
 // ── BoothTable ─────────────────────────────────────────────────────────────────
 
-export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?: number; selectedBlock?: Block }) {
+export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: { headerTop?: number; selectedBlock?: Block; search?: string }) {
   const [records, setRecords] = React.useState<Record<string, BoothRecord>>(
     () => loadRecords()
   )
@@ -355,6 +375,19 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
     return { quantity, amount }
   }, [records])
 
+  const searchResults = React.useMemo(() => {
+    if (!search) return []
+    const q = search.toLowerCase()
+    return booths.filter((b) =>
+      [b.pos, b.name, b.rep, b.twitter, b.web, b.pixiv].some((s) => s.toLowerCase().includes(q))
+    )
+  }, [search])
+
+  const searchTotals = React.useMemo(() => ({
+    quantity: searchResults.reduce((s, b) => s + (parseInt(records[b.pos]?.quantity ?? "") || 0), 0),
+    amount: searchResults.reduce((s, b) => s + (parseInt(records[b.pos]?.amount ?? "") || 0), 0),
+  }), [searchResults, records])
+
   const favoriteBooths = React.useMemo(
     () => booths.filter((b) => records[b.pos]?.favorite),
     [records]
@@ -378,17 +411,39 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
             blockBooths={boothsByBlock[block]}
             records={records}
             onUpdate={onUpdate}
+            search={search}
           />
         </TabsContent>
       ))}
+      <TabsContent
+        value="__search__"
+        className="mt-0 overflow-auto"
+        style={{ height: innerHeight ? `${innerHeight - headerTop - footerHeight}px` : `calc(100vh - ${headerTop}px - ${footerHeight}px)` }}
+      >
+        <BlockTable
+          blockBooths={searchResults}
+          records={records}
+          onUpdate={onUpdate}
+        />
+      </TabsContent>
       <div ref={footerRef} className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-end gap-4 border-t bg-background px-6 py-2 text-sm">
-        <span className="text-muted-foreground">{selectedBlock} 攤位</span>
-        <span>{blockTotals.quantity} 個</span>
-        <span>{blockTotals.amount.toLocaleString()}</span>
-        <span className="text-border">|</span>
-        <span className="text-muted-foreground">總共</span>
-        <span>{grandTotals.quantity} 個</span>
-        <span className="font-semibold">{grandTotals.amount.toLocaleString()}</span>
+        {search ? (
+          <>
+            <span className="text-muted-foreground">搜尋結果 {searchResults.length} 筆</span>
+            <span>{searchTotals.quantity} 個</span>
+            <span>{searchTotals.amount.toLocaleString()}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-muted-foreground">{selectedBlock} 攤位</span>
+            <span>{blockTotals.quantity} 個</span>
+            <span>{blockTotals.amount.toLocaleString()}</span>
+            <span className="text-border">|</span>
+            <span className="text-muted-foreground">總共</span>
+            <span>{grandTotals.quantity} 個</span>
+            <span className="font-semibold">{grandTotals.amount.toLocaleString()}</span>
+          </>
+        )}
       </div>
 
       <button
@@ -406,7 +461,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
           <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
             <SheetTitle>清單</SheetTitle>
           </SheetHeader>
-          <Tabs defaultValue="favorites" className="flex flex-col flex-1 overflow-hidden">
+          <Tabs defaultValue="favorites" className="flex flex-col flex-1 overflow-hidden w-full">
             <TabsList className="mx-4 mt-2 shrink-0 w-auto self-start">
               <TabsTrigger value="favorites">我的最愛 ({favoriteBooths.length})</TabsTrigger>
               <TabsTrigger value="purchases">購買項目 ({purchaseBooths.length})</TabsTrigger>
@@ -415,8 +470,8 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
               const list = tab === "favorites" ? favoriteBooths : purchaseBooths
               const emptyMsg = tab === "favorites" ? "尚無最愛攤位" : "尚無購買項目"
               return (
-                <TabsContent key={tab} value={tab} className="flex-1 overflow-auto mt-2 px-0">
-                  <table className="text-sm border-separate border-spacing-0">
+                <TabsContent key={tab} value={tab} className="flex-1 overflow-auto mt-2 px-0  w-full">
+                  <table className="text-sm border-separate border-spacing-0  w-full">
                     <thead>
                       <tr>
                         <th className="sticky top-0 bg-background px-2 py-2 w-8"></th>
