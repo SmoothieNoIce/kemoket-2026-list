@@ -13,10 +13,17 @@ import "./app.css"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Kemoket 2026 List</title>
+        <meta name="description" content="Kemoket 2026 List" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
+        <meta property="og:title" content="Kemoket 2026 List" />
+        <meta property="og:description" content="Kemoket 2026 List" />
+        <meta property="og:type" content="website" />
         <Meta />
         <Links />
       </head>
