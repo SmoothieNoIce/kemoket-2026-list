@@ -477,6 +477,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
                         <th className="sticky top-0 bg-background px-2 py-2 w-8"></th>
                         <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-16">配置</th>
                         <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-40">サークル名</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-28">代表者名</th>
                         <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-44">twitter</th>
                         <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-36">web</th>
                         <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-36">pixiv</th>
@@ -489,7 +490,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
                     <tbody>
                       {list.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="text-center text-muted-foreground text-sm py-8">{emptyMsg}</td>
+                          <td colSpan={11} className="text-center text-muted-foreground text-sm py-8">{emptyMsg}</td>
                         </tr>
                       ) : list.map((booth) => {
                         const r = records[booth.pos] ?? DEFAULT_RECORD
@@ -506,16 +507,13 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
                             </td>
                             <td className="px-3 py-2 text-xs font-mono">{booth.pos}</td>
                             <td className="px-3 py-2 text-xs font-medium">{booth.name}</td>
-                            <td className="px-3 py-2">
-                              {booth.twitter ? (
-                                <div className="flex items-center gap-1.5">
-                                  <TwitterAvatar twitterUrl={booth.twitter} />
-                                  <a href={booth.twitter} target="_blank" rel="noopener noreferrer"
-                                    className="text-xs text-primary underline underline-offset-2 truncate max-w-[80px]">
-                                    @{getTwitterUsername(booth.twitter)}
-                                  </a>
-                                </div>
-                              ) : <span className="text-muted-foreground text-xs">—</span>}
+                            <td className="px-3 py-2 text-xs text-muted-foreground">{booth.rep}</td>
+                            <td className="px-3 py-2 overflow-hidden">
+                              <div className="flex items-center gap-2">
+                                {booth.twitter && <TwitterAvatar twitterUrl={booth.twitter} />}
+                                <LinkWithVisited href={booth.twitter} visited={r.visitedTwitter} tooltipLabel="twitter"
+                                  onVisit={() => onUpdate(booth.pos, { visitedTwitter: true })} />
+                              </div>
                             </td>
                             <td className="px-3 py-2">
                               <LinkWithVisited href={booth.web} visited={r.visitedWeb} tooltipLabel="web"
@@ -548,7 +546,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
                     {list.length > 0 && (
                       <tfoot>
                         <tr className="border-t font-medium">
-                          <td colSpan={7} className="px-3 py-2 text-xs text-right">合計</td>
+                          <td colSpan={8} className="px-3 py-2 text-xs text-right">合計</td>
                           <td className="px-3 py-2 text-xs">
                             {list.reduce((s, b) => s + (parseInt(records[b.pos]?.quantity ?? "") || 0), 0)}
                           </td>
