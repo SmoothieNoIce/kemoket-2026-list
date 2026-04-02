@@ -22,7 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="overflow-x-hidden">
         {children}
-        <Toaster position="top-center" />
+        <Toaster position="top-center" closeButton />
         <ScrollRestoration />
         <Scripts />
       </body>
