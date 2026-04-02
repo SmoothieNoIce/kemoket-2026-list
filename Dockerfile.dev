@@ -1,0 +1,5 @@
+FROM node:24-bookworm
+
+WORKDIR /app
+
+EXPOSE 3000
