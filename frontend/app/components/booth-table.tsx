@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, ListIcon, StarIcon, XIcon } from "lucide-react"
 import {
   TableBody,
   TableCell,
@@ -12,14 +12,20 @@ import {
 } from "~/components/ui/table"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
-import { Textarea } from "~/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
-import { TabsContent } from "~/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet"
+import { cn } from "~/lib/utils"
 import boothsData from "~/data/booths.json"
 
 interface Booth {
@@ -32,6 +38,7 @@ interface Booth {
 }
 
 interface BoothRecord {
+  favorite: boolean
   wantToBuy: boolean
   quantity: string
   amount: string
@@ -43,6 +50,7 @@ interface BoothRecord {
 
 const STORAGE_KEY = "kemoket-2026-records"
 const DEFAULT_RECORD: BoothRecord = {
+  favorite: false,
   wantToBuy: false,
   quantity: "",
   amount: "",
@@ -166,6 +174,10 @@ interface BoothRowProps {
 const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: BoothRowProps) {
   const { pos } = booth
 
+  const onStarClick = React.useCallback(
+    () => onUpdate(pos, { favorite: !record.favorite }),
+    [onUpdate, pos, record.favorite]
+  )
   const visitWeb = React.useCallback(() => onUpdate(pos, { visitedWeb: true }), [onUpdate, pos])
   const visitPixiv = React.useCallback(() => onUpdate(pos, { visitedPixiv: true }), [onUpdate, pos])
   const visitTwitter = React.useCallback(() => onUpdate(pos, { visitedTwitter: true }), [onUpdate, pos])
@@ -182,26 +194,31 @@ const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: Booth
     [onUpdate, pos]
   )
   const onNotesChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => onUpdate(pos, { notes: e.target.value }),
+    (e: React.ChangeEvent<HTMLInputElement>) => onUpdate(pos, { notes: e.target.value }),
     [onUpdate, pos]
   )
 
   return (
     <TableRow>
+      <TableCell className="w-8">
+        <button onClick={onStarClick} className="flex items-center justify-center">
+          <StarIcon className={cn("size-4", record.favorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+        </button>
+      </TableCell>
       <TableCell className="text-xs font-mono">{pos}</TableCell>
       <TableCell className="text-xs font-medium">{booth.name}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{booth.rep}</TableCell>
-      <TableCell>
-        <LinkWithVisited href={booth.web} visited={record.visitedWeb} tooltipLabel="web" onVisit={visitWeb} />
-      </TableCell>
-      <TableCell>
-        <LinkWithVisited href={booth.pixiv} visited={record.visitedPixiv} tooltipLabel="pixiv" onVisit={visitPixiv} />
-      </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
           {booth.twitter && <TwitterAvatar twitterUrl={booth.twitter} />}
           <LinkWithVisited href={booth.twitter} visited={record.visitedTwitter} tooltipLabel="twitter" onVisit={visitTwitter} />
         </div>
+      </TableCell>
+      <TableCell>
+        <LinkWithVisited href={booth.web} visited={record.visitedWeb} tooltipLabel="web" onVisit={visitWeb} />
+      </TableCell>
+      <TableCell>
+        <LinkWithVisited href={booth.pixiv} visited={record.visitedPixiv} tooltipLabel="pixiv" onVisit={visitPixiv} />
       </TableCell>
       <TableCell className="text-center">
         <Checkbox checked={record.wantToBuy} onCheckedChange={onCheckChange} />
@@ -241,41 +258,42 @@ function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
     // No overflow wrapper — any overflow-x:auto ancestor forces overflow-y:auto,
     // creating a scroll context that traps sticky. Let the body handle scrolling.
     <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
-        <TableHeader className="[&_tr]:border-b">
-          <TableRow>
-            <TableHead className="sticky top-0 z-10 bg-background w-16">配置</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-40">サークル名</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-28">代表者名</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-36">web</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-36">pixiv</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-40">twitter</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-20">是否已經購買</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-20">數量</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-24">金額</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background min-w-40">備註</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {blockBooths.map((booth) => (
-            <BoothRow
-              key={booth.pos}
-              booth={booth}
-              record={records[booth.pos] ?? DEFAULT_RECORD}
-              onUpdate={onUpdate}
-            />
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={7} className="text-right font-medium">
-              合計
-            </TableCell>
-            <TableCell className="font-medium">{totalQuantity}</TableCell>
-            <TableCell className="font-medium">{totalAmount.toLocaleString()}</TableCell>
-            <TableCell />
-          </TableRow>
-        </TableFooter>
-      </table>
+      <TableHeader className="[&_tr]:border-b">
+        <TableRow>
+          <TableHead className="sticky top-0 z-10 bg-background w-8"></TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-16">配置</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-40">サークル名</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-28">代表者名</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-40">twitter</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-36">web</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-36">pixiv</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-20">是否為購買項目</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-20">數量</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background w-24">金額</TableHead>
+          <TableHead className="sticky top-0 z-10 bg-background min-w-40">備註</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {blockBooths.map((booth) => (
+          <BoothRow
+            key={booth.pos}
+            booth={booth}
+            record={records[booth.pos] ?? DEFAULT_RECORD}
+            onUpdate={onUpdate}
+          />
+        ))}
+      </TableBody>
+      <TableFooter>
+        <TableRow>
+          <TableCell colSpan={8} className="text-right font-medium">
+            合計
+          </TableCell>
+          <TableCell className="font-medium">{totalQuantity}</TableCell>
+          <TableCell className="font-medium">{totalAmount.toLocaleString()}</TableCell>
+          <TableCell />
+        </TableRow>
+      </TableFooter>
+    </table>
   )
 }
 
@@ -285,6 +303,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
   const [records, setRecords] = React.useState<Record<string, BoothRecord>>(
     () => loadRecords()
   )
+  const [sheetOpen, setSheetOpen] = React.useState(false)
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const footerRef = React.useRef<HTMLDivElement>(null)
   const [footerHeight, setFooterHeight] = React.useState(40)
@@ -336,6 +355,16 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
     return { quantity, amount }
   }, [records])
 
+  const favoriteBooths = React.useMemo(
+    () => booths.filter((b) => records[b.pos]?.favorite),
+    [records]
+  )
+
+  const purchaseBooths = React.useMemo(
+    () => booths.filter((b) => records[b.pos]?.wantToBuy),
+    [records]
+  )
+
   return (
     <>
       {BLOCKS.map((block) => (
@@ -361,6 +390,127 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
         <span>{grandTotals.quantity} 個</span>
         <span className="font-semibold">{grandTotals.amount.toLocaleString()}</span>
       </div>
+
+      <button
+        onClick={() => setSheetOpen(true)}
+        style={{ bottom: `${footerHeight + 12}px` }}
+        className="fixed right-4 z-20 h-10 px-4 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center gap-2 hover:bg-primary/90 transition-colors text-sm font-medium"
+        aria-label="開啟清單"
+      >
+        <ListIcon className="size-4" />
+        清單
+      </button>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="w-full flex flex-col p-0 max-h-[70vh]">
+          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
+            <SheetTitle>清單</SheetTitle>
+          </SheetHeader>
+          <Tabs defaultValue="favorites" className="flex flex-col flex-1 overflow-hidden">
+            <TabsList className="mx-4 mt-2 shrink-0 w-auto self-start">
+              <TabsTrigger value="favorites">我的最愛 ({favoriteBooths.length})</TabsTrigger>
+              <TabsTrigger value="purchases">購買項目 ({purchaseBooths.length})</TabsTrigger>
+            </TabsList>
+            {(["favorites", "purchases"] as const).map((tab) => {
+              const list = tab === "favorites" ? favoriteBooths : purchaseBooths
+              const emptyMsg = tab === "favorites" ? "尚無最愛攤位" : "尚無購買項目"
+              return (
+                <TabsContent key={tab} value={tab} className="flex-1 overflow-auto mt-2 px-0">
+                  <table className="text-sm border-separate border-spacing-0">
+                    <thead>
+                      <tr>
+                        <th className="sticky top-0 bg-background px-2 py-2 w-8"></th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-16">配置</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-40">サークル名</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-44">twitter</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-36">web</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-36">pixiv</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-20">購買</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-20">數量</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground w-24">金額</th>
+                        <th className="sticky top-0 bg-background text-left px-3 py-2 text-xs font-medium text-muted-foreground min-w-40">備註</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {list.length === 0 ? (
+                        <tr>
+                          <td colSpan={10} className="text-center text-muted-foreground text-sm py-8">{emptyMsg}</td>
+                        </tr>
+                      ) : list.map((booth) => {
+                        const r = records[booth.pos] ?? DEFAULT_RECORD
+                        const removeField = tab === "favorites" ? "favorite" : "wantToBuy"
+                        return (
+                          <tr key={booth.pos} className="border-b last:border-0">
+                            <td className="px-2 py-2">
+                              <button
+                                onClick={() => onUpdate(booth.pos, { [removeField]: false })}
+                                className="flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <XIcon className="size-3.5" />
+                              </button>
+                            </td>
+                            <td className="px-3 py-2 text-xs font-mono">{booth.pos}</td>
+                            <td className="px-3 py-2 text-xs font-medium">{booth.name}</td>
+                            <td className="px-3 py-2">
+                              {booth.twitter ? (
+                                <div className="flex items-center gap-1.5">
+                                  <TwitterAvatar twitterUrl={booth.twitter} />
+                                  <a href={booth.twitter} target="_blank" rel="noopener noreferrer"
+                                    className="text-xs text-primary underline underline-offset-2 truncate max-w-[80px]">
+                                    @{getTwitterUsername(booth.twitter)}
+                                  </a>
+                                </div>
+                              ) : <span className="text-muted-foreground text-xs">—</span>}
+                            </td>
+                            <td className="px-3 py-2">
+                              <LinkWithVisited href={booth.web} visited={r.visitedWeb} tooltipLabel="web"
+                                onVisit={() => onUpdate(booth.pos, { visitedWeb: true })} />
+                            </td>
+                            <td className="px-3 py-2">
+                              <LinkWithVisited href={booth.pixiv} visited={r.visitedPixiv} tooltipLabel="pixiv"
+                                onVisit={() => onUpdate(booth.pos, { visitedPixiv: true })} />
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <Checkbox checked={r.wantToBuy}
+                                onCheckedChange={(v) => onUpdate(booth.pos, { wantToBuy: Boolean(v) })} />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input min={0} className="h-7 w-16 text-xs" value={r.quantity}
+                                onChange={(e) => onUpdate(booth.pos, { quantity: e.target.value })} />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input min={0} className="h-7 w-20 text-xs" value={r.amount}
+                                onChange={(e) => onUpdate(booth.pos, { amount: e.target.value })} />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input className="h-7 text-xs min-w-32" value={r.notes}
+                                onChange={(e) => onUpdate(booth.pos, { notes: e.target.value })} />
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                    {list.length > 0 && (
+                      <tfoot>
+                        <tr className="border-t font-medium">
+                          <td colSpan={7} className="px-3 py-2 text-xs text-right">合計</td>
+                          <td className="px-3 py-2 text-xs">
+                            {list.reduce((s, b) => s + (parseInt(records[b.pos]?.quantity ?? "") || 0), 0)}
+                          </td>
+                          <td className="px-3 py-2 text-xs">
+                            {list.reduce((s, b) => s + (parseInt(records[b.pos]?.amount ?? "") || 0), 0).toLocaleString()}
+                          </td>
+                          <td />
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </TabsContent>
+              )
+            })}
+          </Tabs>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }
