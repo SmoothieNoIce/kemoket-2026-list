@@ -220,16 +220,16 @@ const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: Booth
       <TableCell className="text-xs font-mono">{pos}</TableCell>
       <TableCell className="text-xs font-medium">{booth.name}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{booth.rep}</TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">
         <div className="flex items-center gap-2">
           {booth.twitter && <TwitterAvatar twitterUrl={booth.twitter} />}
           <LinkWithVisited href={booth.twitter} visited={record.visitedTwitter} tooltipLabel="twitter" onVisit={visitTwitter} />
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">
         <LinkWithVisited href={booth.web} visited={record.visitedWeb} tooltipLabel="web" onVisit={visitWeb} />
       </TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">
         <LinkWithVisited href={booth.pixiv} visited={record.visitedPixiv} tooltipLabel="pixiv" onVisit={visitPixiv} />
       </TableCell>
       <TableCell className="text-center">
