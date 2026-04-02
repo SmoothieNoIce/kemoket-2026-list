@@ -249,7 +249,7 @@ function BlockTable({ blockBooths, records, onUpdate }: BlockTableProps) {
             <TableHead className="sticky top-0 z-10 bg-background w-36">web</TableHead>
             <TableHead className="sticky top-0 z-10 bg-background w-36">pixiv</TableHead>
             <TableHead className="sticky top-0 z-10 bg-background w-40">twitter</TableHead>
-            <TableHead className="sticky top-0 z-10 bg-background w-20">要買嗎</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-background w-20">是否已經購買</TableHead>
             <TableHead className="sticky top-0 z-10 bg-background w-20">數量</TableHead>
             <TableHead className="sticky top-0 z-10 bg-background w-24">金額</TableHead>
             <TableHead className="sticky top-0 z-10 bg-background min-w-40">備註</TableHead>
@@ -286,6 +286,25 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
     () => loadRecords()
   )
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const footerRef = React.useRef<HTMLDivElement>(null)
+  const [footerHeight, setFooterHeight] = React.useState(40)
+  const [innerHeight, setInnerHeight] = React.useState(0)
+
+  React.useEffect(() => {
+    const el = footerRef.current
+    if (!el) return
+    setFooterHeight(el.offsetHeight)
+    const ro = new ResizeObserver(() => setFooterHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  React.useEffect(() => {
+    const update = () => setInnerHeight(window.innerHeight)
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   const onUpdate = React.useCallback((pos: string, patch: Partial<BoothRecord>) => {
     setRecords((prev) => {
@@ -324,7 +343,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
           key={block}
           value={block}
           className="mt-0 overflow-auto"
-          style={{ height: `calc(100vh - ${headerTop}px - 40px)` }}
+          style={{ height: innerHeight ? `${innerHeight - headerTop - footerHeight}px` : `calc(100vh - ${headerTop}px - ${footerHeight}px)` }}
         >
           <BlockTable
             blockBooths={boothsByBlock[block]}
@@ -333,14 +352,14 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A" }: { headerTop?:
           />
         </TabsContent>
       ))}
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-end gap-4 border-t bg-background px-6 py-2 text-sm">
-        <span className="text-muted-foreground">{selectedBlock} ブロック</span>
+      <div ref={footerRef} className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-end gap-4 border-t bg-background px-6 py-2 text-sm">
+        <span className="text-muted-foreground">{selectedBlock} 攤位</span>
         <span>{blockTotals.quantity} 個</span>
-        <span>¥{blockTotals.amount.toLocaleString()}</span>
+        <span>{blockTotals.amount.toLocaleString()}</span>
         <span className="text-border">|</span>
-        <span className="text-muted-foreground">全体</span>
+        <span className="text-muted-foreground">總共</span>
         <span>{grandTotals.quantity} 個</span>
-        <span className="font-semibold">¥{grandTotals.amount.toLocaleString()}</span>
+        <span className="font-semibold">{grandTotals.amount.toLocaleString()}</span>
       </div>
     </>
   )
