@@ -57,11 +57,11 @@ export default function Home() {
 
   return (
     <Tabs value={search ? "__search__" : selectedBlock} onValueChange={(v) => { if (!search) setSelectedBlock(v as Block) }} className="flex flex-col gap-0 w-screen">
-      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-30 border-b bg-background">
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-30 border-b bg-background overflow-visible">
         {/* 桌面：單列，search | tabs 置中 | 按鈕 */}
         <div className="hidden md:grid md:grid-cols-[auto_1fr_auto] md:items-center md:gap-2 md:px-4 md:py-2">
           <span className="font-semibold text-sm whitespace-nowrap">関西けもケット11</span>
-          <div className="flex items-center justify-center gap-2 overflow-x-auto overflow-y-hidden">
+          <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 -my-1">
             <div className="relative shrink-0">
               <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
               <Input
