@@ -236,10 +236,10 @@ const BoothRow = React.memo(function BoothRow({ booth, record, onUpdate }: Booth
         <Checkbox checked={record.wantToBuy} onCheckedChange={onCheckChange} />
       </TableCell>
       <TableCell>
-        <Input min={0} className="h-7 w-16 text-xs" value={record.quantity} onChange={onQuantityChange} />
+        <Input min={0} className="h-7 w-16 text-xs" value={record.quantity} onChange={onQuantityChange} disabled={!record.wantToBuy} />
       </TableCell>
       <TableCell>
-        <Input min={0} className="h-7 w-20 text-xs" value={record.amount} onChange={onAmountChange} />
+        <Input min={0} className="h-7 w-20 text-xs" value={record.amount} onChange={onAmountChange} disabled={!record.wantToBuy} />
       </TableCell>
       <TableCell>
         <Input className="min-h-7 h-7 text-xs resize-none" value={record.notes} onChange={onNotesChange} />
@@ -278,7 +278,7 @@ function BlockTable({ blockBooths, records, onUpdate, search }: BlockTableProps)
     // No overflow wrapper — any overflow-x:auto ancestor forces overflow-y:auto,
     // creating a scroll context that traps sticky. Let the body handle scrolling.
     <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
-      <TableHeader className="[&_tr]:border-b">
+      <TableHeader className="border-b">
         <TableRow>
           <TableHead className="sticky top-0 z-10 bg-background w-8"></TableHead>
           <TableHead className="sticky top-0 z-10 bg-background w-16">配置</TableHead>
@@ -462,7 +462,7 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
             <SheetTitle>清單</SheetTitle>
           </SheetHeader>
           <Tabs defaultValue="favorites" className="flex flex-col flex-1 overflow-hidden w-full">
-            <TabsList className="mx-4 mt-2 shrink-0 w-auto self-start">
+            <TabsList className="mx-4 shrink-0 w-auto self-center">
               <TabsTrigger value="favorites">我的最愛 ({favoriteBooths.length})</TabsTrigger>
               <TabsTrigger value="purchases">購買項目 ({purchaseBooths.length})</TabsTrigger>
             </TabsList>
@@ -529,11 +529,11 @@ export function BoothTable({ headerTop = 0, selectedBlock = "A", search = "" }: 
                             </td>
                             <td className="px-3 py-2">
                               <Input min={0} className="h-7 w-16 text-xs" value={r.quantity}
-                                onChange={(e) => onUpdate(booth.pos, { quantity: e.target.value })} />
+                                onChange={(e) => onUpdate(booth.pos, { quantity: e.target.value })} disabled={!r.wantToBuy} />
                             </td>
                             <td className="px-3 py-2">
                               <Input min={0} className="h-7 w-20 text-xs" value={r.amount}
-                                onChange={(e) => onUpdate(booth.pos, { amount: e.target.value })} />
+                                onChange={(e) => onUpdate(booth.pos, { amount: e.target.value })} disabled={!r.wantToBuy} />
                             </td>
                             <td className="px-3 py-2">
                               <Input className="h-7 text-xs min-w-32" value={r.notes}
